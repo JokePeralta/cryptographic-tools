@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Strength Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Password Strength Checker</h1>
+        <form id="password-form">
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            <button type="button" onclick="checkPassword()">Check Strength</button>
+        </form>
+        <div class="result" id="result"></div>
+    </div>
+    
+    <script>
+        function checkPassword() {
+            var password = document.getElementById("password").value;
+            var result = checkPasswordStrength(password);
+            var resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = "<p><strong>Your password has:</strong></p>" +
+                                  "<p>" + result.lowerCount + " lowercase letters</p>" +
+                                  "<p>" + result.upperCount + " uppercase letters</p>" +
+                                  "<p>" + result.numCount + " digits</p>" +
+                                  "<p>" + result.wspaceCount + " whitespaces</p>" +
+                                  "<p>" + result.specialCount + " special characters</p>" +
+                                  "<p><strong>Password Score:</strong> " + result.strength + "/5</p>" +
+                                  "<p><strong>Remarks:</strong> " + result.remarks + "</p>";
+        }
+        
+        function checkPasswordStrength(password) {
+            var strength = 0;
+            var remarks = "";
+            var lowerCount = upperCount = numCount = wspaceCount = specialCount = 0;
+
+            for (var i = 0; i < password.length; i++) {
+                var char = password.charAt(i);
+                if (char.match(/[a-z]/)) {
+                    lowerCount++;
+                } else if (char.match(/[A-Z]/)) {
+                    upperCount++;
+                } else if (char.match(/[0-9]/)) {
+                    numCount++;
+                } else if (char === " ") {
+                    wspaceCount++;
+                } else {
+                    specialCount++;
+                }
+            }
+
+            if (lowerCount >= 1) {
+                strength++;
+            }
+            if (upperCount >= 1) {
+                strength++;
+            }
+            if (numCount >= 1) {
+                strength++;
+            }
+            if (wspaceCount >= 1) {
+                strength++;
+            }
+            if (specialCount >= 1) {
+                strength++;
+            }
+
+            if (strength == 1) {
+                remarks = "That's a very bad password. Change it as soon as possible.";
+            } else if (strength == 2) {
+                remarks = "That's a weak password. You should consider using a tougher password.";
+            } else if (strength == 3) {
+                remarks = "Your password is okay, but it can be improved.";
+            } else if (strength == 4) {
+                remarks = "Your password is hard to guess. But you could make it even more secure.";
+            } else if (strength == 5) {
+                remarks = "Now that's one hell of a strong password!!! Hackers don't have a chance guessing that password!";
+            }
+
+            return {
+                "lowerCount": lowerCount,
+                "upperCount": upperCount,
+                "numCount": numCount,
+                "wspaceCount": wspaceCount,
+                "specialCount": specialCount,
+                "strength": strength,
+                "remarks": remarks
+            };
+        }
+    </script>
+</body>
+</html>

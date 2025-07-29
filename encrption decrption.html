@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AES Encryption/Decryption</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 300px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #007BFF;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AES Encryption/Decryption</h1>
+        <div class="form-group">
+            <label for="key">Key (Text):</label>
+            <input type="text" id="key" placeholder="Enter your key">
+        </div>
+        <div class="form-group">
+            <label for="data">Data:</label>
+            <textarea id="data" placeholder="Enter data to encrypt"></textarea>
+        </div>
+        <div class="form-group">
+            <button onclick="encryptData()">Encrypt</button>
+            <button onclick="decryptData()">Decrypt</button>
+        </div>
+        <div class="form-group">
+            <label for="result">Result:</label>
+            <textarea id="result" readonly></textarea>
+        </div>
+    </div>
+    <script>
+        async function getKeyFromText(keyText) {
+            const encoder = new TextEncoder();
+            const keyMaterial = encoder.encode(keyText);
+            const hash = await crypto.subtle.digest('SHA-256', keyMaterial);
+            return await crypto.subtle.importKey(
+                'raw',
+                hash.slice(0, 16), // Use the first 16 bytes of the hash as the AES key
+                'AES-GCM',
+                true,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        async function encryptData() {
+            try {
+                const keyText = document.getElementById('key').value;
+                const data = document.getElementById('data').value;
+
+                const key = await getKeyFromText(keyText);
+                const encoder = new TextEncoder();
+                const encodedData = encoder.encode(data);
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+
+                const encryptedData = await crypto.subtle.encrypt(
+                    {
+                        name: 'AES-GCM',
+                        iv: iv
+                    },
+                    key,
+                    encodedData
+                );
+
+                const result = ivToString(iv) + '.' + arrayBufferToBase64(encryptedData);
+                document.getElementById('result').value = result;
+            } catch (e) {
+                console.error("Error in encryptData:", e);
+                alert("Encryption failed.");
+            }
+        }
+
+        async function decryptData() {
+            try {
+                const keyText = document.getElementById('key').value;
+                const data = document.getElementById('data').value;
+
+                const [ivStr, encryptedDataStr] = data.split('.');
+                if (!ivStr || !encryptedDataStr) {
+                    alert("Invalid data format for decryption.");
+                    return;
+                }
+                const iv = ivFromString(ivStr);
+                const encryptedData = base64ToArrayBuffer(encryptedDataStr);
+
+                const key = await getKeyFromText(keyText);
+
+                try {
+                    const decryptedData = await crypto.subtle.decrypt(
+                        {
+                            name: 'AES-GCM',
+                            iv: iv
+                        },
+                        key,
+                        encryptedData
+                    );
+
+                    const decoder = new TextDecoder();
+                    const result = decoder.decode(decryptedData);
+                    document.getElementById('result').value = result;
+                } catch (e) {
+                    console.error("Error in decryptData:", e);
+                    alert("Decryption failed.");
+                }
+            } catch (e) {
+                console.error("Error in decryptData:", e);
+                alert("Decryption failed.");
+            }
+        }
+
+        function ivToString(iv) {
+            return btoa(String.fromCharCode(...iv));
+        }
+
+        function ivFromString(str) {
+            return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+        }
+
+        function arrayBufferToBase64(buffer) {
+            return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+        }
+
+        function base64ToArrayBuffer(base64) {
+            return Uint8Array.from(atob(base64), c => c.charCodeAt(0)).buffer;
+        }
+    </script>
+</body>
+</html>
